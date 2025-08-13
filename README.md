@@ -1,63 +1,125 @@
 <div align="center">
-  
-  # Conductor LLM Platform
-  Enterprise LLM Orchestration Platform - Intelligently route requests across multiple AI providers with cost optimisation and real-time monitoring
-  
+
+# Multi LLM Platform
+
+**Enterprise LLM Orchestration Platform**  
+Intelligently route requests across multiple AI providers with cost optimization and real-time monitoring.
+
 </div>
 
 ---
 
-## 🌟 **What is Conductor?**
+This is an **enterprise-grade LLM orchestration platform** that routes requests across multiple AI providers (OpenAI, Anthropic, Google, local models), optimizing for **cost, speed, and quality**.
 
-Conductor is an **enterprise-grade LLM orchestration platform** that intelligently routes requests across multiple AI providers (OpenAI, Anthropic, Google, local models) while optimizing for **cost, speed, and quality**.
-
-Think of it as the **conductor of an AI orchestra** - coordinating different AI models to create the perfect performance for each request.
-
-### 🎯 **Core Problems Solved**
-
-| Problem | Conductor Solution |
-|---------|-------------------|
-| 🔒 **Vendor Lock-in** | Multi-provider architecture with easy switching |
-| 💰 **Unpredictable Costs** | Free tier optimization + real-time cost tracking |
-| ⚡ **Performance Variability** | Intelligent routing based on request characteristics |
-| 🔍 **No Visibility** | Comprehensive monitoring and analytics dashboard |
-| 🛡️ **Security Concerns** | Built-in governance and compliance features |
+> _Think of it as the conductor of an AI orchestra—coordinating different AI models for the perfect performance._
 
 ---
 
-## ✨ **Key Features**
+## 🎯 Core Problems Solved
 
-### 🎯 **Smart Routing Engine**
-- **Automatic Provider Selection** - Chooses optimal LLM based on request type
-- **Performance Optimization** - Routes for speed, quality, or cost efficiency  
-- **Fallback Mechanisms** - Automatic failover if provider is unavailable
-- **Custom Routing Rules** - Define your own routing logic
+| Problem                    | Conductor Solution                                   |
+| -------------------------- | ---------------------------------------------------- |
+| 🔒 Vendor Lock-in          | Multi-provider architecture, easy switching          |
+| 💰 Unpredictable Costs     | Free tier optimization, real-time cost tracking      |
+| ⚡ Performance Variability | Intelligent routing based on request characteristics |
+| 🔍 No Visibility           | Monitoring & analytics dashboard                     |
+| 🛡️ Security Concerns       | Built-in governance & compliance features            |
 
-### 💰 **Cost Optimization**
-- **Free Tier Maximization** - Intelligent use of free API quotas
-- **Real-time Cost Tracking** - Monitor spending across all providers
-- **Budget Alerts** - Get notified before hitting spending limits
-- **ROI Analytics** - Track value generated per dollar spent
-
-### 📊 **Enterprise Monitoring**
-- **Real-time Dashboards** - Provider health, performance metrics
-- **Usage Analytics** - Detailed request patterns and trends  
-- **Performance Benchmarking** - Compare providers objectively
-- **Compliance Reporting** - Audit trails for enterprise governance
-
-### 🔌 **Multi-Provider Support**
-- **Google Gemini** - High quality, generous free tier
-- **Groq** - Ultra-fast inference, free tier available
-- **Ollama** - Local models for privacy and cost control
-- **HuggingFace** - Open-source models, completely free
-- **Easy Extension** - Add new providers with minimal code
 
 ---
 
-## 🚀 **Quick Start**
+## 🏗️ Architecture Overview
+
+<!-- ![architechure](/images/architechure.png) -->
+
+### 🧩 System Components
+
+| Component        | Purpose            | Technology         |
+| ---------------- | ------------------ | ------------------ |
+| 🖥️ Web Dashboard | User Interface     | React + JavaScript |
+| 🚀 API Gateway   | Request Handling   | FastAPI + Python   |
+| 🧠 Smart Router  | Provider Selection | AI Logic + ML      |
+| 🔌 LLM Providers | AI Model Access    | 4 Free APIs        |
+| 💾 Database      | Data Storage       | PostgreSQL  |
+| 📊 Analytics     | Monitoring         | Real-time Metrics  |
+
+---
+
+### Provider Selection Flow
+
+| Criteria      | Provider       | Description                |
+| ------------- | -------------- | -------------------------- |
+| Speed needed? | Groq ⚡        | Ultra-fast responses       |
+| Complex task? | Gemini 🧠      | Handles advanced queries   |
+| Private data? | Ollama 🔒      | Local, privacy-focused     |
+| Otherwise     | HuggingFace 🤗 | Open-source, community API |
+
+---
+
+### 🔄 Request Flow
+
+1. **👤 User → API Request**
+   - Authentication, Rate Limiting, Validation
+2. **🧠 Smart Router → Analysis**
+   - Request Complexity, Speed Requirements, Provider Health
+3. **🤖 Provider Selection**
+   - Groq (Speed), Gemini (Quality), Ollama (Privacy), HuggingFace (Free)
+4. **📊 Response Processing**
+   - Analytics Logging, Cost Tracking, Performance Metrics
+5. **✅ Return to User**
+
+---
+
+### 💸 Cost Optimization Overview
+
+| Provider       | Usage Bar | Allocation                   |
+| -------------- | --------- | ---------------------------- |
+| Gemini         | █████████ | 100% Free (60 req/min)       |
+| Groq           | █████████ | 100% Free (14.4k tokens/min) |
+| Ollama         | █████████ | 100% Free (Always local)     |
+| HuggingFace    | █████████ | 100% Free (Community tier)   |
+| **Total Cost** |           | **$0.00/month**              |
+
+---
+
+## ✨ Key Features
+
+### 🎯 Smart Routing Engine
+
+- Automatic provider selection based on request type
+- Performance optimization for speed, quality, or cost
+- Fallback mechanisms for provider failover
+- Custom routing rules
+
+### 💰 Cost Optimization
+
+- Maximizes free API quotas
+- Real-time cost tracking
+- Budget alerts
+- ROI analytics
+
+### 📊 Enterprise Monitoring
+
+- Real-time dashboards
+- Usage analytics
+- Performance benchmarking
+- Compliance reporting
+
+### 🔌 Multi-Provider Support
+
+- Google Gemini (quality, free tier)
+- Groq (ultra-fast, free tier)
+- Ollama (local, privacy)
+- HuggingFace (open-source, free)
+- Easy extension for new providers
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - Docker & Docker Compose
 
-
+---
