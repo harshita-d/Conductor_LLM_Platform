@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  conductor-api:
+    build: .
+    container_name: conductor-api
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - API_KEY=demo-key-123
+      - DATABASE_URL=sqlite:///./conductor.db
+    volumes:
+      # Mount source code for hot reload
+      - ./app:/app/app
+    restart: unless-stopped
+
+networks:
+  default:
+    name: conductor-network
