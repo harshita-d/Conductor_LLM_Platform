@@ -197,3 +197,31 @@ conductor-llm-platform/
   - model: Model identifier
 - **Response**:
   - Estimated Cost in USD
+
+#### `Concrete Method: update_metrics`
+
+- It update providers performace metrics
+-
+
+# providers/gemini_provider.py
+
+- this file is a conceret implementation of the BaseProvider abstract class
+- It connects to google Gemeni API using offical SDK
+
+### `imports`
+
+- **_google.generativeai as genai_**:
+  - it an offical gemini SDK
+- **_time_**:
+  - Performance timing
+- **_datetime_**:
+  - timestamp
+- **_os_**:
+  - env variable
+- **_logging_**:
+  - Debug/error logging
+- **_BaseProvider_**:
+  - import parent class
+- **_models_**:
+  - importing models
+
