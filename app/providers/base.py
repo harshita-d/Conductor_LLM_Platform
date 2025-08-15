@@ -1,0 +1,22 @@
+from abc import ABC, abstractmethod
+from datetime import datetime, timezone
+from ..models import ChatRequest, ChatResponse
+
+
+class BaseProvider(ABC):
+    """Base Provider class"""
+
+    def __init__(self, name):
+        self.name = name
+        self.is_healthy = True
+        self.last_check = datetime.now(timezone.utc)
+        self.total_requests = 0
+        self.successful_requests = 0
+        self.failed_requests = 0
+        self.total_latency = 0.0
+        self.last_error = None
+
+    @abstractmethod
+    def chat_completion(self, request: ChatRequest) -> ChatResponse:
+        """Generate a Chat Completion"""
+        pass
