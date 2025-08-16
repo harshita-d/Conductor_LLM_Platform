@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from ..models import ChatRequest, ChatResponse
+from typing import Optional
 
 
 class BaseProvider(ABC):
@@ -20,3 +21,21 @@ class BaseProvider(ABC):
     def chat_completion(self, request: ChatRequest) -> ChatResponse:
         """Generate a Chat Completion"""
         pass
+
+    @abstractmethod
+    def estimated_cost(self, tokens: int, model: str) -> float:
+        """Estimate the cost for a given number of tokens"""
+        pass
+
+    def update_metrics(
+        self, latency_ms: float, success: bool, error: Optional[str] = None
+    ):
+        """update provider performance metrix"""
+        self.total_requests += 1
+        self.total_latency += latency_ms
+        if success:
+            self.successful_requests += 1
+            self.last_error = None
+        else:
+            self.failed_requests += 1
+            self.last_error = error
