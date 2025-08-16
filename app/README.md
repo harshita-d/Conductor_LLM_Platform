@@ -201,7 +201,19 @@ conductor-llm-platform/
 #### `Concrete Method: update_metrics`
 
 - It update providers performace metrics
--
+- It records performance data after every API call (success or failure) to build analytics and monitoring capabilities.
+- **Args**:
+  - latency_ms: Total time spent waiting for responses in milliseconds
+  - success: Whether the request was successful
+  - error: Error message if request failed
+- **total_requests**: otal API calls made
+- **latency_ms**: Total time spent waiting for responses
+- **success: True**: to track how many calls worked
+  - **successful_requests**: total successfull calls
+  - **last_error**: Clear error when things work again
+- **success: False**: tracking how many calls fail
+  - **failed_requests**: total failed request
+  - **last_error**: Store most recent error message
 
 # providers/gemini_provider.py
 
@@ -225,3 +237,89 @@ conductor-llm-platform/
 - **_models_**:
   - importing models
 
+#### `chat_completion`
+
+- its an asynchronous function
+- **Args**:
+  - ChatRequest
+- **Response**:
+  - ChatResponse
+- Calculating API call time
+- processing end to end latency time
+- **GenerationConfig**:
+  - configure the AI's text generation behavior
+  - temperature: Randomness and creativity
+  - max_output_tokens: maximum output length
+  - candidate_count: number of different response variants to generate
+  - top_p: this is a text generation sampling method that controls how the AI choose the next word/token when generating response
+    - top_p=0.8 means: Pick words until cumulative probability ≥ 80%
+    - example: sunny (30%) + cloudy (25%) + rainy (20%) + hot (10%)
+  - top_k: Vocabulary selection by limiting to K most probable words. - top_k=10 means: - Only consider the top 10 most likely words - [pizza, pasta, sushi, burgers, salad, tacos, fish, chicken, rice, bread]
+    > top_k is applied first, then top_p is applied to the remaining candidates.
+- the char response for GEMINI API:
+
+  ```
+  response.text (str)
+  – The generated text content (empty string if nothing generated or blocked).
+
+  response.candidates (List[Candidate])
+  – A list of one or more Candidate objects, each representing a possible completion. Each Candidate has:
+  – text (str): the candidate’s generated text
+  – finish_reason (Enum): why generation stopped, e.g.
+
+  STOP – reached natural end
+
+  MAX_TOKENS – hit token limit
+
+  SAFETY – blocked by safety filters
+
+  RECITATION – blocked for copyright
+
+  OTHER – other error
+
+  response.metadata (optional)
+  – Additional metadata such as model version, request ID, or timing info, depending on SDK version.
+  ```
+
+- **Exception**:
+  - latency_ms: Captures how long the request took before failing, so failures still contribute to your performance metrics.
+  - update_metrics: Increments total_requests and failed_requests, adds latency_ms to total_latency, and stores last_error = error_msg. This keeps your success rate and average latency calculations accurate.
+
+#### `_format_messages`
+
+- its a helper message converts standard chat messages into GEMINI specific prompt.
+- it convert a list of messages into a single string that gemini understands
+- its a private method
+- **Args**:
+  - List[ChatMessages]
+- **Response**:
+
+  - single formated prompt string
+
+  ```python
+  messages = [
+    ChatMessage(role="system", content="You are a helpful coding assistant"),
+    ChatMessage(role="user", content="How do I create a Python list?"),
+    ChatMessage(role="assistant", content="You can create a list using square brackets: my_list = [1, 2, 3]"),
+    ChatMessage(role="user", content="Can you show me more examples?")
+  ]
+
+  # final output
+  """Context: You are a helpful coding assistant
+  User: How do I create a Python list?
+  Assistant: You can create a list using square brackets: my_list = [1, 2, 3]
+  User: Can you show me more examples?"""
+  ```
+
+#### `_estimate_token`
+
+- **token**: prompt + response
+- 1 token ≈ 4 characters on average for English text; ≈ 0.75 words.
+- Gemini-Pro supports up to 30,720 tokens of input + output combined. If your prompt + response exceed that, generation is truncated.
+- Generating text happens one token at a time; each token requires a full forward pass through the model.
+- \_estimate_tokens() sums prompt + response character lengths, divides by 4, then adds a ~10% buffer to approximate the true token count
+- **Args**:
+  prompt: Input prompt
+  response: Generated response
+- **Response**:
+  Estimated token count
