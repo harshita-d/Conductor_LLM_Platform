@@ -323,3 +323,99 @@ conductor-llm-platform/
   response: Generated response
 - **Response**:
   Estimated token count
+
+# Main.py
+
+- This is the entry point of the application
+
+### `imports`
+
+- FastAPI Modules: app creation, exceptions, header/dep injection, responses.
+  ```python
+  from fastapi import FastAPI, HTTPException, Header, Depends
+  from fastapi.responses import JSONResponse
+  ```
+- CORS middleware: cross-origin support.
+  ```python
+  from fastapi.middleware.cors import CORSMiddleware
+  ```
+- asynccontextmanager: manage startup/shutdown lifecycle.
+  ```python
+  from contextlib import asynccontextmanager
+  ```
+- dotenv: load .env configuration (API keys).
+  ```python
+  from dotenv import load_dotenv
+  ```
+- logging: structured log output.
+  ```python
+  import os, time, logging
+  ```
+-
+
+#### `app=FastAPI()`
+
+- this is a fastAPI application instance
+  - Stores global config (title, description, middleware, lifespan).
+  - Registers your routes (when you write @app.get("/...") etc.).
+  - Manages state (like app.state for DB pools, provider registry).
+  - Implements the ASGI protocol (so Uvicorn/Hypercorn can talk to it).
+- We need this because ASGI server needs an entrypoint as uvicorn expects an ASGI app object as entry point
+- we use the below command to run the fastAPI server
+  `uvicorn app.main:app --reload`
+- where main:app means
+  - **main** → the Python file main.py (without .py)
+  - **app** → the FastAPI instance (app = FastAPI()) inside that file
+
+#### `lifespan`
+
+- this project depends on external LLM providers, which means we must do things before the app can start handling request. and things to do when it shuts down, thats why we need **_lifespan_**
+  ```python
+  @asynccontextmanager
+  async def lifespan(app: FastAPI):
+      # startup logic
+      yield
+      # shutdown logic
+  ```
+- lifespan is **async** because startup and shutdown work often involve input/output from other tasks
+- the other tasks are like
+  - initalizing a database connection pool
+  - running health checks againts external APIs
+  - starting stopping background tasks
+- if lifespan was **sync**, we couldn't **await** these async operations
+- **lifespan** passes to **FastAPI** constructor
+- FastAPI calls lifespan(app) function, where it runs the startup block, and if any error comes than app fails to start
+- lifespan does not has to be a generator, instead it has to be a context manager specifically async
+- @asynccontextmanager lets you write an async context manager as a single async generator function.
+  - Everything before yield = **aenter** (startup)
+  - Everything after yield = **aexit** (shutdown)
+  - The yield marks the precise boundary where FastAPI starts serving requests.
+- **asynccontextmanager**:
+
+  - FastAPI's lifespan option expects an async context manager that wraps the whole app lifetime
+  - asynccontextmanager solves pronlem of writing async generator, turns that generator into a valid async context manager with **aenter** / **aexit** under the hood
+  - it will allow to use async/await for I/O
+
+- alternate to writing **no generator**
+
+  ```python
+  class AppLifespan:
+      def __init__(self, app):
+          self.app = app
+
+      async def __aenter__(self):
+          # startup
+          self.app.state.providers = {}
+          # await async setup...
+          return self.app  # (optional)
+
+      async def __aexit__(self, exc_type, exc, tb):
+          # shutdown
+          # await async cleanup...
+          return False  # don’t suppress exceptions
+
+  def lifespan(app):
+      return AppLifespan(app)
+
+  app = FastAPI(lifespan=lifespan)
+  ```
