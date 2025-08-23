@@ -27,6 +27,11 @@ class BaseProvider(ABC):
         """Estimate the cost for a given number of tokens"""
         pass
 
+    @abstractmethod
+    async def health_check(self) -> bool:
+        """Check health of a particular provider"""
+        pass
+
     def update_metrics(
         self, latency_ms: float, success: bool, error: Optional[str] = None
     ):
