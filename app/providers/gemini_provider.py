@@ -115,3 +115,27 @@ class GeminiProvider(BaseProvider):
             self.update_metrics(latency_ms, False, str(e))
             logger.error(f"GEMINI API Error: {str(e)}")
             raise Exception(f"GEMINI API Error: {str(e)}")
+
+    async def health_check(self) -> bool:
+        """Check if GEMINI API is accessible and responding"""
+        try:
+            test_config = genai.types.GenerationConfig(
+                max_output_tokens=10, temprature=0
+            )
+
+            response = self.model.generaate_content(
+                "hello", generation_config=test_config
+            )
+
+            is_healthy = bool(response.text and len(response.text.stript()) > 0)
+
+            self.is_healthy = is_healthy
+            self.last_check = datetime.now(timezone.utc)
+
+            return is_healthy
+
+        except Exception as e:
+
+            self.is_healthy = False
+            self.last_check = datetime.now(timezone.utc)
+            return False
