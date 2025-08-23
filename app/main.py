@@ -5,6 +5,7 @@ import logging
 from .providers import list_providers, get_provider
 from typing import Dict
 from .providers import BaseProvider
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
@@ -12,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 # Global variables
 providers: Dict[str, BaseProvider] = {}
-initialized_count = 0
 
 
 @asynccontextmanager
@@ -20,6 +20,7 @@ async def lifespan(app: FastAPI):
     """FastAPI lifespan manager for startup and shutdown events"""
     # startup
     logger.info("Starting app....")
+    initialized_count = 0
     available_provider = list_providers()
     for provider_name in available_provider:
         try:
@@ -54,3 +55,19 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH"],
+    allow_headers=["*"],
+)
+
+# ROOT END POINT
+
+
+@app.get("/", tags=["General"])
+async def root():
+    """Welcome endpoint"""
+    return {"message": "Wemcome to LLM Platform"}

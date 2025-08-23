@@ -74,7 +74,7 @@ class ChatResponse(BaseModel):
     token_used: int = Field(..., description="Number of tokens consumed")
     cost: float = Field(..., description="Cost in USD (0.00 for free tiers)")
     latency_ms: float = Field(..., description="Response time in milliseconds")
-    timestamp: datetime = Field(default_factory=datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),)
 
     class Congig:
         json_schema_extra = {
