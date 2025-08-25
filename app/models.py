@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from enum import Enum
 from typing import List, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 class MessageRole(str, Enum):
@@ -56,7 +56,7 @@ class ChatRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "provider": "auto",
-                "messages": [
+                "message": [
                     {"role": "user", "content": "Write a short poem about AI"}
                 ],
                 "temperature": 0.7,
@@ -74,7 +74,7 @@ class ChatResponse(BaseModel):
     token_used: int = Field(..., description="Number of tokens consumed")
     cost: float = Field(..., description="Cost in USD (0.00 for free tiers)")
     latency_ms: float = Field(..., description="Response time in milliseconds")
-    timestamp: datetime = Field(default_factory=datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),)
 
     class Congig:
         json_schema_extra = {
@@ -88,3 +88,12 @@ class ChatResponse(BaseModel):
                 "timestamp": "2024-01-15T10:30:00Z",
             }
         }
+
+
+class ProviderStatus(BaseModel):
+    name:str=Field(..., description="name of the service provider")
+    status:bool=Field(..., description="status of the service provider")
+
+class HealthResponse(BaseModel):
+    provider: List[ProviderStatus] = Field(..., description="list of providers and their status")
+    uptime: str = Field(..., description="Service uptime")

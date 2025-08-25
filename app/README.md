@@ -325,7 +325,8 @@ conductor-llm-platform/
   Estimated token count
 
 #### `health_check`
-- it checks the health of a provider by sending a dummy request 
+
+- it checks the health of a provider by sending a dummy request
 - and store the result of health check in is_healthy
 
 # Main.py
@@ -395,10 +396,11 @@ conductor-llm-platform/
   - Everything after yield = **aexit** (shutdown)
   - The yield marks the precise boundary where FastAPI starts serving requests.
 - **asynccontextmanager**:
+
   - **@contextmanager**
-  A decorator that lets you build a context manager from a simple **generator** function, instead of creating a class and implementing the protocol.
-  - The @contextmanager decorator reduces the boilerplate of creating a context manager: instead of writing a whole class with __enter__/__exit__ methods, you just implement a generator with a single yield that should produce whatever you want the __en ter__ method to return.
-  - In a generator decorated with @contextmanager, yield is used to split the body of the function in two parts: everything before the yield will be executed at the beginning of the while block when the interpreter calls __enter__; the code after yield will run when __exit__ is called at the end of the block.
+    A decorator that lets you build a context manager from a simple **generator** function, instead of creating a class and implementing the protocol.
+  - The @contextmanager decorator reduces the boilerplate of creating a context manager: instead of writing a whole class with **enter**/**exit** methods, you just implement a generator with a single yield that should produce whatever you want the **enter** method to return.
+  - In a generator decorated with @contextmanager, yield is used to split the body of the function in two parts: everything before the yield will be executed at the beginning of the while block when the interpreter calls **enter**; the code after yield will run when **exit** is called at the end of the block.
   - FastAPI's lifespan option expects an async context manager that wraps the whole app lifetime
   - asynccontextmanager solves pronlem of writing async generator, turns that generator into a valid async context manager with **aenter** / **aexit** under the hood
   - it will allow to use async/await for I/O
