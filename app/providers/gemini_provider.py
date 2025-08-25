@@ -28,7 +28,7 @@ class GeminiProvider(BaseProvider):
             genai.configure(api_key=api_key)
 
             # initialize the model
-            self.model = genai.GenerativeModel("gemini-pro")
+            self.model = genai.GenerativeModel("models/gemini-2.0-flash")
 
             logger.info("Gemini provider intiailized sucessfully")
 
@@ -119,15 +119,30 @@ class GeminiProvider(BaseProvider):
     async def health_check(self) -> bool:
         """Check if GEMINI API is accessible and responding"""
         try:
+            print("=======================================")
             test_config = genai.types.GenerationConfig(
-                max_output_tokens=10, temprature=0
+                max_output_tokens=10, temperature=0
             )
-
-            response = self.model.generaate_content(
+            
+            print("test_config=======",test_config)
+            try: 
+                response = self.model.generate_content(
                 "hello", generation_config=test_config
             )
+            except Exception as e:
+                print("❌ Error during generate_content:", e)
+                return False
+            content = ""
+            
+            print("response======", response)
+            try:
 
-            is_healthy = bool(response.text and len(response.text.stript()) > 0)
+                content = response.candidates[0].content.parts[0]
+
+            except Exception as e:
+                print("Failed to access response.text:", e)
+
+            is_healthy = bool(content.text and len(content.text.strip()) > 0)
 
             self.is_healthy = is_healthy
             self.last_check = datetime.now(timezone.utc)

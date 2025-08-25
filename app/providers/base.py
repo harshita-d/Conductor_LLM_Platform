@@ -44,3 +44,4 @@ class BaseProvider(ABC):
         else:
             self.failed_requests += 1
             self.last_error = error
+
