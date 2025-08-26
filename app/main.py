@@ -8,7 +8,7 @@ from .providers import BaseProvider
 from fastapi.middleware.cors import CORSMiddleware
 import time
 from datetime import timedelta
-from .models import HealthResponse, ChatResponse, ChatRequest, Provider
+from .models import HealthResponse, ChatResponse, ChatRequest, Provider, SystemStatus
 import os
 
 load_dotenv()
@@ -135,7 +135,7 @@ async def _filter_healthy_providers(providers: List[Dict[str, bool]]) -> List[st
     return healthy_providers
 
 
-@app.post("/chat", tags=["chat"])
+@app.post("/chat", response_model=ChatResponse, tags=["chat"])
 async def chat_response(request: ChatRequest, api_key: str = Depends(Validate_api_key)):
     """
     Generate AI chat completion using the optimal provider.
@@ -152,4 +152,9 @@ async def chat_response(request: ChatRequest, api_key: str = Depends(Validate_ap
         return response
 
     except Exception as e:
-        pass
+        raise HTTPException(status_code=500, detail=f"AI provider error: {str(e)}")
+
+@app.get("/status", response_model=SystemStatus, tags=['Health'])
+async def system_status(api_key:str=Depends(Validate_api_key)):
+    """Get detailed system status including provider metrics"""
+    
