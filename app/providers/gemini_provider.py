@@ -5,7 +5,7 @@ import google.generativeai as genai
 from ..models import ChatRequest, ChatResponse, ChatMessage
 import time
 from typing import List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
@@ -29,12 +29,11 @@ class GeminiProvider(BaseProvider):
             genai.configure(api_key=api_key)
 
             # initialize the model
-            self.model = genai.GenerativeModel("models/gemini-2.0-flash")
-
-            logger.info("Gemini provider intiailized sucessfully")
+            self.model_name="gemini-2.0-flash"
+            self.model = genai.GenerativeModel(f"models/{self.model_name}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize Gemini provider: {e}")
+            print(f"Failed to initialize Gemini provider: {e}")
             self.is_healthy = False
             raise
 
@@ -52,7 +51,7 @@ class GeminiProvider(BaseProvider):
 
     def _estimate_token(self, prompt: str, response: str) -> int:
         """Estimated token count"""
-        total_chars = len(prompt) + len(response)
+        total_chars = len(response)
         estimated_token = int(total_chars / 4)
         return int(estimated_token * 1.1)
 
@@ -93,7 +92,6 @@ class GeminiProvider(BaseProvider):
                     status=400,
                     detail=f"error while getting response: {e}"
                 )
-
             latency_ms: float = (time.time() - start_time) * 1000
 
             if not response.text:
@@ -111,11 +109,11 @@ class GeminiProvider(BaseProvider):
             self.update_metrics(latency_ms, True)
             return ChatResponse(
                 provider="gemini",
-                model="gemini-pro",
+                model=self.model_name,
                 response=response.text.strip(),
                 token_used=token_used,
                 cost=cost,
-                latency_ms=latency_ms,
+                latency_ms=str(timedelta(seconds=int(latency_ms))),
                 timestamp=datetime.now(timezone.utc),
             )
 
@@ -148,3 +146,4 @@ class GeminiProvider(BaseProvider):
             self.is_healthy = False
             self.last_check = datetime.now(timezone.utc)
             return False
+

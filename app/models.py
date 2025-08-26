@@ -56,9 +56,7 @@ class ChatRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "provider": "auto",
-                "message": [
-                    {"role": "user", "content": "Write a short poem about AI"}
-                ],
+                "message": [{"role": "user", "content": "Write a short poem about AI"}],
                 "temperature": 0.7,
                 "max_tokens": 1000,
             }
@@ -73,8 +71,10 @@ class ChatResponse(BaseModel):
     response: str = Field(..., description="Generated AI response")
     token_used: int = Field(..., description="Number of tokens consumed")
     cost: float = Field(..., description="Cost in USD (0.00 for free tiers)")
-    latency_ms: float = Field(..., description="Response time in milliseconds")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),)
+    latency_ms: str = Field(..., description="Response time in milliseconds")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+    )
 
     class Congig:
         json_schema_extra = {
@@ -91,9 +91,32 @@ class ChatResponse(BaseModel):
 
 
 class ProviderStatus(BaseModel):
-    name:str=Field(..., description="name of the service provider")
-    status:bool=Field(..., description="status of the service provider")
+    name: str = Field(..., description="name of the service provider")
+    status: bool = Field(..., description="status of the service provider")
+
 
 class HealthResponse(BaseModel):
-    provider: List[ProviderStatus] = Field(..., description="list of providers and their status")
+    provider: List[ProviderStatus] = Field(
+        ..., description="list of providers and their status"
+    )
     uptime: str = Field(..., description="Service uptime")
+
+
+class ProviderStatus(BaseModel):
+    """Status information for a single provider"""
+
+    name: str = Field(..., description="Provider name")
+    healthy: bool = Field(..., description="Whether the provider is currently healthy")
+    last_check: datetime = Field(..., description="last health check timestamp")
+    average_latency: float = Field(..., description="Average response time")
+    success_rate: float = Field(..., description="success rate between 0.0 to 0.1")
+    total_request: int = Field(default=0, description="total request processed")
+
+
+class SystemStatus(BaseModel):
+    """Status information for a single provider"""
+
+    status: str = Field(..., description="Overall System Status")
+    providers: List[ProviderStatus] = Field(..., description="Status of all providers")
+    total_requests: int = Field(..., description="total requests accross all providers")
+    uptime: timedelta = Field(..., description="System uptime")

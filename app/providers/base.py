@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from ..models import ChatRequest, ChatResponse
+from ..models import ChatRequest, ChatResponse, ProviderStatus
 from typing import Optional
 
 
@@ -45,3 +45,16 @@ class BaseProvider(ABC):
             self.failed_requests += 1
             self.last_error = error
 
+    def get_status(self) -> ProviderStatus:
+        """Get current provider status and metrics"""
+
+        avg_latency = self.total_latency / max(self.total_requests, 1)
+        success_rate = self.successful_requests / max(self.total_requests, 1)
+        return ProviderStatus(
+            name=self.name,
+            healthy=self.is_healthy,
+            last_check=self.last_check,
+            average_latency=avg_latency,
+            success_rate=success_rate,
+            total_requests=self.total_requests,
+        )
