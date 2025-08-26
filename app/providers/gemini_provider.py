@@ -6,6 +6,7 @@ from ..models import ChatRequest, ChatResponse, ChatMessage
 import time
 from typing import List
 from datetime import datetime, timezone
+from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ class GeminiProvider(BaseProvider):
     def _format_message(self, messages: List[ChatMessage]) -> str:
         """Converts Chat messages to GEMINI compatible prompt"""
         formatted_message = []
-
         for message in messages:
             if message.role == "system":
                 formatted_message.append(f"Context: {message.content}")
@@ -48,7 +48,6 @@ class GeminiProvider(BaseProvider):
                 formatted_message.append(f"User: {message.content}")
             elif message.role == "assistant":
                 formatted_message.append(f"Assistant:{message.content}")
-
         return "\n".join(formatted_message)
 
     def _estimate_token(self, prompt: str, response: str) -> int:
@@ -63,12 +62,11 @@ class GeminiProvider(BaseProvider):
 
     async def chat_completion(self, request: ChatRequest) -> ChatResponse:
         """Generate Chat completion using GEMINI"""
-
         start_time = time.time()
         try:
-            prompt = self._format_message(request.messages)
+            prompt = self._format_message(request.message)
             generation_config = genai.types.GenerationConfig(
-                temprature=request.temperature,
+                temperature=request.temperature,
                 max_output_tokens=request.max_tokens,
                 candidate_count=1,
                 top_p=0.8,
@@ -81,10 +79,21 @@ class GeminiProvider(BaseProvider):
                 genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: genai.types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
             }
 
-            logger.debug("Sending request to gemini")
-            response = self.model.generate_content(
-                prompt, generation_config, safety_settings
-            )
+            print("Sending request to gemini")
+
+            response = ""
+            try:
+                response = self.model.generate_content(
+                    prompt,
+                    generation_config=generation_config,
+                    safety_settings=safety_settings,
+                )
+            except Exception as e:
+                raise HTTPException(
+                    status=400,
+                    detail=f"error while getting response: {e}"
+                )
+
             latency_ms: float = (time.time() - start_time) * 1000
 
             if not response.text:
@@ -113,44 +122,29 @@ class GeminiProvider(BaseProvider):
         except Exception as e:
             latency_ms: float = (time.time() - start_time) * 1000
             self.update_metrics(latency_ms, False, str(e))
-            logger.error(f"GEMINI API Error: {str(e)}")
             raise Exception(f"GEMINI API Error: {str(e)}")
 
     async def health_check(self) -> bool:
         """Check if GEMINI API is accessible and responding"""
         try:
-            print("=======================================")
             test_config = genai.types.GenerationConfig(
                 max_output_tokens=10, temperature=0
             )
-            
-            print("test_config=======",test_config)
-            try: 
+            try:
                 response = self.model.generate_content(
-                "hello", generation_config=test_config
-            )
+                    "hello", generation_config=test_config
+                )
             except Exception as e:
                 print("❌ Error during generate_content:", e)
                 return False
-            content = ""
             
-            print("response======", response)
-            try:
-
-                content = response.candidates[0].content.parts[0]
-
-            except Exception as e:
-                print("Failed to access response.text:", e)
-
+            content = response.candidates[0].content.parts[0]
             is_healthy = bool(content.text and len(content.text.strip()) > 0)
-
             self.is_healthy = is_healthy
             self.last_check = datetime.now(timezone.utc)
-
             return is_healthy
 
         except Exception as e:
-
             self.is_healthy = False
             self.last_check = datetime.now(timezone.utc)
             return False

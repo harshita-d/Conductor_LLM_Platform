@@ -2,13 +2,13 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Depends
 from contextlib import asynccontextmanager
 import logging
-from .providers import list_providers, get_provider
-from typing import Dict
+from .providers import list_providers, get_provider, GeminiProvider
+from typing import Dict, List
 from .providers import BaseProvider
 from fastapi.middleware.cors import CORSMiddleware
 import time
 from datetime import timedelta
-from .models import HealthResponse, ChatResponse, ChatRequest
+from .models import HealthResponse, ChatResponse, ChatRequest, Provider
 import os
 
 load_dotenv()
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     for provider_name in available_provider:
         try:
             provider = get_provider(provider_name)
-            print("provider==",provider)
+            print("provider==", provider)
             if await provider.health_check():
                 providers[provider_name] = provider
                 logger.info(f"{provider_name} provider initialized successfully")
@@ -110,6 +110,31 @@ async def Validate_api_key(api_key: str = Header(..., alias="X-API-Key")):
         )
 
 
+async def _select_provider(request: ChatRequest, healthy_providers: List[str]) -> str:
+    """Select the optimal provider for the request"""
+
+    if request.provider == Provider.AUTO:
+        return healthy_providers[0]
+
+    if request.provider.value not in healthy_providers:
+        raise HTTPException(status=40, detail="Provided model not avavailble")
+
+    return request.provider.value
+
+
+async def _filter_healthy_providers(providers: List[Dict[str, bool]]) -> List[str]:
+    """Filter only healthy providers"""
+    healthy_providers = [
+        provider["name"] for provider in providers if provider["status"]
+    ]
+    if not healthy_providers:
+        raise HTTPException(
+            status_code=503,
+            detail="No AI providers are currently available. Please try again later.",
+        )
+    return healthy_providers
+
+
 @app.post("/chat", tags=["chat"])
 async def chat_response(request: ChatRequest, api_key: str = Depends(Validate_api_key)):
     """
@@ -117,7 +142,14 @@ async def chat_response(request: ChatRequest, api_key: str = Depends(Validate_ap
     **Auto-routing logic:**
     - Complex analysis → Gemini(high quality)
     """
-    print("=======Chat Request Response:==========", request)
     result = await check_all_providers_health()
-    healthy_providers = [provider["name"] for provider in result if provider["status"]]
-    return {"status": request, "result": result, "healthy_providers": healthy_providers}
+    healthy_providers = await _filter_healthy_providers(result)
+    selected_provider_name = await _select_provider(request, healthy_providers)
+
+    selected_provider = providers[selected_provider_name]
+    try:
+        response = await selected_provider.chat_completion(request)
+        return response
+
+    except Exception as e:
+        pass
