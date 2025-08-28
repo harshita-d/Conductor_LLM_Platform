@@ -120,3 +120,21 @@ class SystemStatus(BaseModel):
     providers: List[ProviderStatus] = Field(..., description="Status of all providers")
     total_requests: int = Field(..., description="total requests accross all providers")
     uptime: timedelta = Field(..., description="System uptime")
+
+
+class ErrorResponse(BaseModel):
+    """Error response model"""
+    error: int = Field(..., description="Error type")
+    detail: str = Field(..., description="Detailed error message")
+    provider: Optional[str] = Field(default=None, description="Provider that caused the error")
+    # timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Error timestamp")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "error": 400,
+                "detail": "The request format is invalid",
+                "provider": None,
+                
+            }
+        }

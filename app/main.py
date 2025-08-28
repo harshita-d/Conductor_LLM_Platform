@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Depends
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
 from .providers import list_providers, get_provider, GeminiProvider
@@ -8,8 +9,16 @@ from .providers import BaseProvider
 from fastapi.middleware.cors import CORSMiddleware
 import time
 from datetime import timedelta
-from .models import HealthResponse, ChatResponse, ChatRequest, Provider, SystemStatus
+from .models import (
+    HealthResponse,
+    ChatResponse,
+    ChatRequest,
+    Provider,
+    SystemStatus,
+    ErrorResponse,
+)
 import os
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -174,4 +183,42 @@ async def system_status():
         providers=provider_statuses,
         total_requests=total_requests,
         uptime=uptime,
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            error=exc.status_code, detail=exc.detail, provider=None
+        ).dict()
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc: Exception):
+    """Handle unexpected exceptions."""
+    logger.error(f"Unexpected error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content=ErrorResponse(
+            error="internal_server_error",
+            detail="An unexpected error occurred. Please try again later.",
+            provider=None
+        ).dict()
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    # You can extract detailed validation errors from `exc.errors()`
+
+    error_response = ErrorResponse(
+        error="validation_error",
+        detail=exc.errors(),
+        provider=None,
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=(error_response)
     )
