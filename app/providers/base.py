@@ -45,6 +45,8 @@ class BaseProvider(ABC):
             self.failed_requests += 1
             self.last_error = error
 
+        print("self.total_requests========", self.total_requests)
+
     def get_status(self) -> ProviderStatus:
         """Get current provider status and metrics"""
 

@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Depends
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
 from .providers import list_providers, get_provider, GeminiProvider
@@ -8,8 +9,16 @@ from .providers import BaseProvider
 from fastapi.middleware.cors import CORSMiddleware
 import time
 from datetime import timedelta
-from .models import HealthResponse, ChatResponse, ChatRequest, Provider, SystemStatus
+from .models import (
+    HealthResponse,
+    ChatResponse,
+    ChatRequest,
+    Provider,
+    SystemStatus,
+    ErrorResponse,
+)
 import os
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -30,7 +39,6 @@ async def lifespan(app: FastAPI):
     for provider_name in available_provider:
         try:
             provider = get_provider(provider_name)
-            print("provider==", provider)
             if await provider.health_check():
                 providers[provider_name] = provider
                 logger.info(f"{provider_name} provider initialized successfully")
@@ -80,7 +88,7 @@ async def root():
 
 
 async def check_all_providers_health():
-    results = []
+    results: List[str, bool] = []
     available_providers = list_providers()
     for name in available_providers:
         try:
@@ -154,7 +162,63 @@ async def chat_response(request: ChatRequest, api_key: str = Depends(Validate_ap
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI provider error: {str(e)}")
 
-@app.get("/status", response_model=SystemStatus, tags=['Health'])
-async def system_status(api_key:str=Depends(Validate_api_key)):
+
+@app.get("/status", response_model=SystemStatus, tags=["Health"])
+async def system_status():
     """Get detailed system status including provider metrics"""
-    
+    provider_statuses = []
+    total_requests = 0
+    for provider in providers.values():
+        status = provider.get_status()
+        provider_statuses.append(status)
+        total_requests += status.total_requests
+
+    uptime = time.time() - start_time
+    overall_status = (
+        "healthy" if any(p.healthy for p in provider_statuses) else "unhealthy"
+    )
+
+    return SystemStatus(
+        status=overall_status,
+        providers=provider_statuses,
+        total_requests=total_requests,
+        uptime=uptime,
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            error=exc.status_code, detail=exc.detail, provider=None
+        ).dict()
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc: Exception):
+    """Handle unexpected exceptions."""
+    logger.error(f"Unexpected error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content=ErrorResponse(
+            error="internal_server_error",
+            detail="An unexpected error occurred. Please try again later.",
+            provider=None
+        ).dict()
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    # You can extract detailed validation errors from `exc.errors()`
+
+    error_response = ErrorResponse(
+        error="validation_error",
+        detail=exc.errors(),
+        provider=None,
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=(error_response)
+    )
