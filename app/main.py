@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Depends
-from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
 from .providers import list_providers, get_provider, GeminiProvider
@@ -206,19 +205,4 @@ async def general_exception_handler(request, exc: Exception):
             detail="An unexpected error occurred. Please try again later.",
             provider=None
         ).dict()
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
-    # You can extract detailed validation errors from `exc.errors()`
-
-    error_response = ErrorResponse(
-        error="validation_error",
-        detail=exc.errors(),
-        provider=None,
-    )
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=(error_response)
     )
