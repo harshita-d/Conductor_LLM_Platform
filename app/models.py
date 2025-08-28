@@ -110,7 +110,7 @@ class ProviderStatus(BaseModel):
     last_check: datetime = Field(..., description="last health check timestamp")
     average_latency: float = Field(..., description="Average response time")
     success_rate: float = Field(..., description="success rate between 0.0 to 0.1")
-    total_request: int = Field(default=0, description="total request processed")
+    total_requests: int = Field(default=0, description="total request processed")
 
 
 class SystemStatus(BaseModel):

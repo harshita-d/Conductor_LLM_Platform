@@ -30,7 +30,6 @@ async def lifespan(app: FastAPI):
     for provider_name in available_provider:
         try:
             provider = get_provider(provider_name)
-            print("provider==", provider)
             if await provider.health_check():
                 providers[provider_name] = provider
                 logger.info(f"{provider_name} provider initialized successfully")
@@ -80,7 +79,7 @@ async def root():
 
 
 async def check_all_providers_health():
-    results = []
+    results: List[str, bool] = []
     available_providers = list_providers()
     for name in available_providers:
         try:
@@ -154,7 +153,25 @@ async def chat_response(request: ChatRequest, api_key: str = Depends(Validate_ap
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI provider error: {str(e)}")
 
-@app.get("/status", response_model=SystemStatus, tags=['Health'])
-async def system_status(api_key:str=Depends(Validate_api_key)):
+
+@app.get("/status", response_model=SystemStatus, tags=["Health"])
+async def system_status():
     """Get detailed system status including provider metrics"""
-    
+    provider_statuses = []
+    total_requests = 0
+    for provider in providers.values():
+        status = provider.get_status()
+        provider_statuses.append(status)
+        total_requests += status.total_requests
+
+    uptime = time.time() - start_time
+    overall_status = (
+        "healthy" if any(p.healthy for p in provider_statuses) else "unhealthy"
+    )
+
+    return SystemStatus(
+        status=overall_status,
+        providers=provider_statuses,
+        total_requests=total_requests,
+        uptime=uptime,
+    )
