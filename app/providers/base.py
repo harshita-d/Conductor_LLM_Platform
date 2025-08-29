@@ -18,7 +18,7 @@ class BaseProvider(ABC):
         self.last_error = None
 
     @abstractmethod
-    def chat_completion(self, request: ChatRequest) -> ChatResponse:
+    def chat_completion(self, request: ChatRequest, api_key: str) -> ChatResponse:
         """Generate a Chat Completion"""
         pass
 

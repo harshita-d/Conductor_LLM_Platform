@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
 
 
@@ -30,6 +30,10 @@ class ChatMessage(BaseModel):
             "example": {"role": "user", "content": "Hello, how are you?"}
         }
 
+class APIKeyRequestProvider(BaseModel):
+    name: str = Field(..., example="gemini")
+    api_key: str = Field(..., example="your-api-key")
+
 
 class ChatRequest(BaseModel):
     """Request model for chat completion"""
@@ -51,7 +55,9 @@ class ChatRequest(BaseModel):
     max_tokens: int = Field(
         default=1000, ge=1, le=4000, description="Maximum number of tokens to generate"
     )
-
+    api_keys: List[APIKeyRequestProvider] = Field(
+        default_factory=list, description="Map of provider_name -> API key for AUTO mode"
+    )
     class Config:
         json_schema_extra = {
             "example": {
@@ -59,6 +65,9 @@ class ChatRequest(BaseModel):
                 "message": [{"role": "user", "content": "Write a short poem about AI"}],
                 "temperature": 0.7,
                 "max_tokens": 1000,
+                  "api_keys": [
+                    { "name": "gemini", "api_key": "GEMINI_API_KEY_123" },
+                ]
             }
         }
 
@@ -90,16 +99,20 @@ class ChatResponse(BaseModel):
         }
 
 
-class ProviderStatus(BaseModel):
+class APIKeyProviderStatus(BaseModel):
     name: str = Field(..., description="name of the service provider")
     status: bool = Field(..., description="status of the service provider")
 
 
 class HealthResponse(BaseModel):
-    provider: List[ProviderStatus] = Field(
+    provider: List[APIKeyProviderStatus] = Field(
         ..., description="list of providers and their status"
     )
     uptime: str = Field(..., description="Service uptime")
+
+
+class HealthRequest(BaseModel):
+    providers: List[APIKeyRequestProvider]
 
 
 class ProviderStatus(BaseModel):

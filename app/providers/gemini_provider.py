@@ -18,24 +18,20 @@ class GeminiProvider(BaseProvider):
         """initialize the gemini provider"""
         super().__init__("gemini")
 
-        # get GEMINI API key
-        api_key = os.getenv("GEMINI_API_KEY")
+        self.model_name = "gemini-2.0-flash"
+        self.model = None  # Will be initialized dynamically
 
+    def _initialize_model(self, api_key: str):
         if not api_key:
-            raise ValueError("GEMINI_API_KEY env variable is required")
+            raise ValueError("API KEY variable is required")
 
         try:
-            # configure gemini api key
             genai.configure(api_key=api_key)
-
-            # initialize the model
-            self.model_name="gemini-2.0-flash"
             self.model = genai.GenerativeModel(f"models/{self.model_name}")
-
         except Exception as e:
             print(f"Failed to initialize Gemini provider: {e}")
             self.is_healthy = False
-            raise
+            raise HTTPException(status_code=401, detail="Invalid Gemini API key")
 
     def _format_message(self, messages: List[ChatMessage]) -> str:
         """Converts Chat messages to GEMINI compatible prompt"""
@@ -59,8 +55,9 @@ class GeminiProvider(BaseProvider):
         """Estimated cost for GEMINI api usage"""
         return 0.0  # current;y GEMINI is free
 
-    async def chat_completion(self, request: ChatRequest) -> ChatResponse:
+    async def chat_completion(self, request: ChatRequest, api_key: str) -> ChatResponse:
         """Generate Chat completion using GEMINI"""
+        self._initialize_model(api_key)
         start_time = time.time()
         try:
             prompt = self._format_message(request.message)
@@ -89,8 +86,7 @@ class GeminiProvider(BaseProvider):
                 )
             except Exception as e:
                 raise HTTPException(
-                    status=400,
-                    detail=f"error while getting response: {e}"
+                    status=400, detail=f"error while getting response: {e}"
                 )
             latency_ms: float = (time.time() - start_time) * 1000
 
@@ -122,8 +118,9 @@ class GeminiProvider(BaseProvider):
             self.update_metrics(latency_ms, False, str(e))
             raise Exception(f"GEMINI API Error: {str(e)}")
 
-    async def health_check(self) -> bool:
+    async def health_check(self, api_key) -> bool:
         """Check if GEMINI API is accessible and responding"""
+        self._initialize_model(api_key)
         try:
             test_config = genai.types.GenerationConfig(
                 max_output_tokens=10, temperature=0
@@ -135,7 +132,6 @@ class GeminiProvider(BaseProvider):
             except Exception as e:
                 print("❌ Error during generate_content:", e)
                 return False
-            
             content = response.candidates[0].content.parts[0]
             is_healthy = bool(content.text and len(content.text.strip()) > 0)
             self.is_healthy = is_healthy
@@ -146,4 +142,3 @@ class GeminiProvider(BaseProvider):
             self.is_healthy = False
             self.last_check = datetime.now(timezone.utc)
             return False
-
