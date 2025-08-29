@@ -15,9 +15,10 @@ from .models import (
     Provider,
     SystemStatus,
     ErrorResponse,
-    HealthRequest
+    HealthRequest,
 )
 import os
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 load_dotenv()
@@ -40,7 +41,7 @@ async def lifespan(app: FastAPI):
         try:
             provider = get_provider(provider_name)
             providers[provider_name] = provider
-            initialized_count+=1
+            initialized_count += 1
         except Exception as e:
             logger.error(f"failed to initialize {provider_name} provider")
     if initialized_count == 0:
@@ -83,30 +84,42 @@ async def root():
     return {"message": "Wemcome to LLM Platform", "providers": list(providers.keys())}
 
 
-async def check_all_providers_health(key_mapping: Dict[str,str]=""):
+async def check_all_providers_health(
+    key_mapping: Dict[str, str] = {},
+) -> List[Dict[str, Union[str, bool]]]:
+    """
+    Check health of all providers using the passed API keys.
+    Returns a list of provider name + status.
+    Raises HTTPException if any provider fails.
+    """
     results: List[Dict[str, Union[str, bool]]] = []
     available_providers = list_providers()
+
     for name in available_providers:
-        try:
-            provider_class = get_provider(name)
-            if name in key_mapping:
-                healthy = await provider_class.health_check(key_mapping[name])
-            else:
-                raise Exception(f"Missing API key for provider: {name}")
-        except Exception as e:
-            print(f"Failed health check for {name}: {e}")
-            healthy = False
-        results.append({"name": name, "status": healthy})
+        provider_class = get_provider(name)
+        if name not in key_mapping:
+            raise HTTPException(
+                status_code=400, detail=f"Missing API key for provider: {name}"
+            )
+
+        health_result = await provider_class.health_check(key_mapping[name])
+        status = health_result["status"]
+        error = health_result["error"]
+        if not status:
+            raise HTTPException(status_code=400, detail=f"{name}: {error}")
+        results.append({"name": name, "status": status})
+
     return results
 
 
 @app.post("/health", response_model=HealthResponse, tags=["Health"])
-async def health(api_keys:HealthRequest ):
+async def health(api_keys: HealthRequest):
     uptime_seconds = time.time() - start_time
     uptime_pretty = str(timedelta(seconds=int(uptime_seconds)))
-    key_mapping={item.name:item.api_key for item in api_keys.providers}
+    key_mapping = {item.name: item.api_key for item in api_keys.providers}
     result = await check_all_providers_health(key_mapping)
     return HealthResponse(provider=result, uptime=uptime_pretty)
+
 
 async def _select_provider(request: ChatRequest, healthy_providers: List[str]) -> str:
     """Select the optimal provider for the request"""
@@ -115,7 +128,7 @@ async def _select_provider(request: ChatRequest, healthy_providers: List[str]) -
         return healthy_providers[0]
 
     if request.provider.value not in healthy_providers:
-        raise HTTPException(status=40, detail="Provided model not avavailble")
+        raise HTTPException(status_code=400, detail="Provided model not availble")
 
     return request.provider.value
 
@@ -147,22 +160,23 @@ async def chat_response(request: ChatRequest):
 
     if selected_provider_name not in providers:
         raise HTTPException(
-        status_code=500,
-        detail=f"Selected provider '{selected_provider_name}' is not initialized or healthy."
-    )
+            status_code=500,
+            detail=f"Selected provider '{selected_provider_name}' is not initialized or healthy.",
+        )
     selected_provider = providers[selected_provider_name]
     api_key = key_mapping.get(selected_provider_name)
     if not api_key:
         raise HTTPException(
             status_code=401,
-            detail=f"Missing API key for selected provider: {selected_provider_name}"
+            detail=f"Missing API key for selected provider: {selected_provider_name}",
         )
-    try:
-        response = await selected_provider.chat_completion(request, api_key=api_key)
-        return response
+    response = await selected_provider.chat_completion(request, api_key=api_key)
+    if not response:
+        raise HTTPException(status_code=500, detail=f"AI provider error: {selected_provider_name}")
+    return response
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI provider error: {str(e)}")
+
+        
 
 
 @app.get("/status", response_model=SystemStatus, tags=["Health"])
@@ -190,6 +204,7 @@ async def system_status():
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
+    print("===========HTTPException Triggered===========")
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
@@ -201,7 +216,7 @@ async def http_exception_handler(request, exc: HTTPException):
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc: Exception):
     """Handle unexpected exceptions."""
-    logger.error(f"Unexpected error: {exc}", exc_info=True)
+    print(f"=========Unexpected error==========2: {exc.detail}")
     return JSONResponse(
         status_code=500,
         content=ErrorResponse(
@@ -209,4 +224,18 @@ async def general_exception_handler(request, exc: Exception):
             detail="An unexpected error occurred. Please try again later.",
             provider=None,
         ).dict(),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    print("======422 Validation Error=====")
+    e = exc.errors()
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": 422,
+            "detail": "Invalid request format. Check required fields.",
+            "validation_errors": e[0]["msg"],
+        },
     )

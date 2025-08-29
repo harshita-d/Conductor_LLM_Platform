@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from ..models import ChatRequest, ChatResponse, ProviderStatus
 from typing import Optional
+from typing import Dict, Union
 
 
 class BaseProvider(ABC):
@@ -28,7 +29,7 @@ class BaseProvider(ABC):
         pass
 
     @abstractmethod
-    async def health_check(self) -> bool:
+    async def health_check(self) -> Dict[str, Union[bool, str]]:
         """Check health of a particular provider"""
         pass
 

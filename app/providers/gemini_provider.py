@@ -4,7 +4,7 @@ import os
 import google.generativeai as genai
 from ..models import ChatRequest, ChatResponse, ChatMessage
 import time
-from typing import List
+from typing import List, Dict, Union
 from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException
 
@@ -118,27 +118,32 @@ class GeminiProvider(BaseProvider):
             self.update_metrics(latency_ms, False, str(e))
             raise Exception(f"GEMINI API Error: {str(e)}")
 
-    async def health_check(self, api_key) -> bool:
-        """Check if GEMINI API is accessible and responding"""
+    async def health_check(self, api_key: str) -> Dict[str, Union[bool, str]]:
+        """
+        Check if GEMINI API is accessible and responding.
+        Returns a dict with status and optional error message.
+        """
         self._initialize_model(api_key)
+
         try:
             test_config = genai.types.GenerationConfig(
-                max_output_tokens=10, temperature=0
+                max_output_tokens=10,
+                temperature=0
             )
-            try:
-                response = self.model.generate_content(
-                    "hello", generation_config=test_config
-                )
-            except Exception as e:
-                print("❌ Error during generate_content:", e)
-                return False
+            response = self.model.generate_content(
+                "hello",
+                generation_config=test_config
+            )
             content = response.candidates[0].content.parts[0]
             is_healthy = bool(content.text and len(content.text.strip()) > 0)
             self.is_healthy = is_healthy
             self.last_check = datetime.now(timezone.utc)
-            return is_healthy
+
+            return {"status": is_healthy, "error": None}
 
         except Exception as e:
+            error_message = str(e).split("\n")[0]  # Simplify verbose tracebacks
+            print("❌ Gemini Health Check Failed:", error_message)
             self.is_healthy = False
             self.last_check = datetime.now(timezone.utc)
-            return False
+            return {"status": False, "error": error_message}
