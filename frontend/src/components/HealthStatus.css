@@ -1,0 +1,88 @@
+/* HealthStatus.css */
+
+.health-container {
+    max-width: 600px;
+    margin: 60px auto;
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .title {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 24px;
+    color: #1e293b;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 15px;
+  }
+  
+  .check-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #2563eb;
+    color: white;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .check-button:hover {
+    background-color: #1e40af;
+  }
+  
+  .error-msg {
+    color: #dc2626;
+    margin-top: 12px;
+    font-size: 14px;
+    text-align: center;
+  }
+  
+  .result-card {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: #f9fafb;
+    text-align: left;
+  }
+  
+  .status-healthy {
+    color: #22c55e;
+    font-weight: bold;
+  }
+  
+  .status-unhealthy {
+    color: #ef4444;
+    font-weight: bold;
+  }
+  
+  .goto-chat-button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px;
+    background-color: #10b981;
+    color: white;
+    border: none;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .goto-chat-button.disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+  }
+  
