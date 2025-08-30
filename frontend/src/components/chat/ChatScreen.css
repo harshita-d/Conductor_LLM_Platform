@@ -1,0 +1,259 @@
+/* ChatScreen.css */
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 900px;
+    margin: 0 auto;
+    font-family: "Inter", sans-serif;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  }
+  
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .chat-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  
+  .health-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  
+  .health-dot.ok {
+    background: #22c55e; /* green */
+  }
+  
+  .health-dot.bad {
+    background: #ef4444; /* red */
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .ghost-btn {
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  
+  .ghost-btn:hover {
+    background: #f3f4f6;
+  }
+  
+  /* Status Section */
+  .status-card {
+    padding: 0.75rem 1rem;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin-right: 0.3rem;
+  }
+  
+  .value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  .badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .badge.good {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  
+  .badge.warn {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+  
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .control {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  
+  .control label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+  
+  .input-field {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  
+  .input-field:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+  
+  /* Chat Messages */
+  .chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #f9fafb;
+  }
+  
+  .empty-hint {
+    text-align: center;
+    color: #9ca3af;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+  }
+  
+  .chat-bubble {
+    max-width: 70%;
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+    margin-bottom: 0.6rem;
+    line-height: 1.4;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  
+  .chat-bubble.user {
+    background: #3b82f6;
+    color: #ffffff;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  
+  .chat-bubble.assistant {
+    background: #e5e7eb;
+    color: #111827;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+  }
+  
+  .typing {
+    display: flex;
+    gap: 0.2rem;
+  }
+  
+  .typing span {
+    width: 6px;
+    height: 6px;
+    background: #6b7280;
+    border-radius: 50%;
+    animation: bounce 1s infinite alternate;
+  }
+  
+  .typing span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .typing span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  
+  @keyframes bounce {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-6px);
+    }
+  }
+  
+  /* Chat Input */
+  .chat-input {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+  }
+  
+  .textarea {
+    flex: 1;
+    resize: none;
+    min-height: 42px;
+    max-height: 120px;
+  }
+  
+  .send-btn {
+    padding: 0.5rem 1rem;
+    background: #3b82f6;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .send-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+  
+  .send-btn:hover:not(:disabled) {
+    background: #2563eb;
+  }
+  
+  /* Errors */
+  .error-text {
+    padding: 0.5rem 1rem;
+    color: #b91c1c;
+    font-size: 0.9rem;
+    background: #fee2e2;
+    border-top: 1px solid #fecaca;
+  }
+  
