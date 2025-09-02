@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm ci --no-audit --no-fund
 
 # Copy source and build
-COPY . .
+COPY frontend/ .
 # Set build-time API base if you use REACT_APP_* vars
 # (you can also pass them via build args in compose)
 ARG REACT_APP_API_BASE=""

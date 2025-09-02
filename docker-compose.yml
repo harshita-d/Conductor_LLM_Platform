@@ -2,8 +2,8 @@
 services:
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .                 # repo root
+      dockerfile: frontend/Dockerfile
       # If your React build needs build-time envs:
       # args:
       #   REACT_APP_API_BASE: "/api"
@@ -14,8 +14,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .                 # repo root
+      dockerfile: backend/Dockerfile
     image: conductor-backend:latest
     # Do NOT publish backend port; keep it internal-only
     expose:
