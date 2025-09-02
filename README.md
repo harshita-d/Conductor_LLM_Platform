@@ -46,12 +46,9 @@ This is an **enterprise-grade LLM orchestration platform** that routes requests 
 
 ### Provider Selection Flow
 
-| Criteria      | Provider       | Description                |
-| ------------- | -------------- | -------------------------- |
-| Speed needed? | Groq ⚡        | Ultra-fast responses       |
-| Complex task? | Gemini 🧠      | Handles advanced queries   |
-| Private data? | Ollama 🔒      | Local, privacy-focused     |
-| Otherwise     | HuggingFace 🤗 | Open-source, community API |
+| Criteria      | Provider  | Description              |
+| ------------- | --------- | ------------------------ |
+| Complex task? | Gemini 🧠 | Handles advanced queries |
 
 ---
 
@@ -71,13 +68,10 @@ This is an **enterprise-grade LLM orchestration platform** that routes requests 
 
 ### 💸 Cost Optimization Overview
 
-| Provider       | Usage Bar | Allocation                   |
-| -------------- | --------- | ---------------------------- |
-| Gemini         | █████████ | 100% Free (60 req/min)       |
-| Groq           | █████████ | 100% Free (14.4k tokens/min) |
-| Ollama         | █████████ | 100% Free (Always local)     |
-| HuggingFace    | █████████ | 100% Free (Community tier)   |
-| **Total Cost** |           | **$0.00/month**              |
+| Provider       | Usage Bar | Allocation             |
+| -------------- | --------- | ---------------------- |
+| Gemini         | █████████ | 100% Free (60 req/min) |
+| **Total Cost** |           | **$0.00/month**        |
 
 ---
 
@@ -107,9 +101,6 @@ This is an **enterprise-grade LLM orchestration platform** that routes requests 
 ### 🔌 Multi-Provider Support
 
 - Google Gemini (quality, free tier)
-- Groq (ultra-fast, free tier)
-- Ollama (local, privacy)
-- HuggingFace (open-source, free)
 - Easy extension for new providers
 
 ---

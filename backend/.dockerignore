@@ -1,0 +1,85 @@
+# --- Python bytecode / caches ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.ipynb_checkpoints/
+
+# --- Virtualenvs / local tooling ---
+.venv/
+venv/
+env/
+python_env/
+pip-wheel-metadata/
+pip-selfcheck.json
+
+# --- Build / dist artifacts ---
+build/
+dist/
+*.spec
+
+# --- Logs / temp ---
+*.log
+logs/
+tmp/
+cache/
+
+# --- Coverage / test outputs ---
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+.pybuilder/
+
+# --- Env & local config (keep a template) ---
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.bak
+
+# --- Local databases ---
+*.sqlite3
+db.sqlite3
+
+# --- Framework-specific (uncomment if applicable) ---
+# Django collected static (don’t ship local artifacts)
+# staticfiles/
+# User-uploaded media (don’t copy local uploads into image)
+# media/
+
+# --- VCS / editor ---
+.git/
+.gitignore
+.gitattributes
+.github/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# --- Repo / CI meta not needed in image ---
+Dockerfile*
+docker-compose*.yml
+README.md
+LICENSE
+
+# --- Poetry / pip-tools (keep lock files!) ---
+.poetry/
+# Do NOT ignore: requirements*.txt, poetry.lock, pyproject.toml
+# (only ignore backup variants)
+poetry.lock.*
+requirements*.txt.*
