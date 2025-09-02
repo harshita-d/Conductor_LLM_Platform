@@ -22,25 +22,16 @@ ENV NODE_ENV=production
 RUN npm run build
 
 ########################
-# 2) Serve Stage
+# 2) Serve via Nginx
 ########################
 FROM nginx:1.27-alpine
-
-# Remove default conf and add ours
 RUN rm -f /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/react.conf
-
-# Copy the built static files
+COPY frontend/nginx.conf /etc/nginx/conf.d/react.conf
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Optional: drop a simple robots.txt (remove if you have your own)
-# RUN printf "User-agent: *\nDisallow:\n" > /usr/share/nginx/html/robots.txt
 
 # Expose HTTP
 EXPOSE 80
 
-# Healthcheck (container-level)
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD wget -qO- http://localhost/healthz || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
