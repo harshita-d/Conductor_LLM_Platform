@@ -1,13 +1,19 @@
-version: "3"
 services:
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      # Pass build-time env (React reads at build, not runtime)
+      # args:
+      #   REACT_APP_API_BASE: "https://api.example.com"
+    image: conductor-frontend:latest
     ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+      - "80:80"                 # serve on standard HTTP
+    restart: unless-stopped
+    # No volumes in prod (immutable image)
+    # healthcheck is defined in Dockerfile, but you could define here instead
+    # healthcheck:
+    #   test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+    #   interval: 30s
+    #   timeout: 3s
+    #   retries: 3
