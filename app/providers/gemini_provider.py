@@ -33,17 +33,25 @@ class GeminiProvider(BaseProvider):
             self.is_healthy = False
             raise HTTPException(status_code=401, detail="Invalid Gemini API key")
 
-    def _format_message(self, messages: List[ChatMessage]) -> str:
-        """Converts Chat messages to GEMINI compatible prompt"""
-        formatted_message = []
-        for message in messages:
-            if message.role == "system":
-                formatted_message.append(f"Context: {message.content}")
-            elif message.role == "user":
-                formatted_message.append(f"User: {message.content}")
-            elif message.role == "assistant":
-                formatted_message.append(f"Assistant:{message.content}")
-        return "\n".join(formatted_message)
+    # def _format_message(self, messages: List[ChatMessage]) -> str:
+    #     """Converts Chat messages to GEMINI compatible prompt"""
+    #     formatted_message = []
+    #     for message in messages:
+    #         if message.role == "system":
+    #             formatted_message.append(f"Context: {message.content}")
+    #         elif message.role == "user":
+    #             formatted_message.append(f"User: {message.content}")
+    #         elif message.role == "assistant":
+    #             formatted_message.append(f"Assistant:{message.content}")
+    #     return "\n".join(formatted_message)
+    
+    def _format_message(self, messages: List[ChatMessage]):
+        role_map = {"user": "user", "assistant": "model", "system": "system"}
+        return [
+            {"role": role_map[m.role], "parts": [{"text": m.content}]}
+            for m in messages
+        ]
+
 
     def _estimate_token(self, prompt: str, response: str) -> int:
         """Estimated token count"""
