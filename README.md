@@ -59,7 +59,7 @@ This is an **enterprise-grade LLM orchestration platform** that routes requests 
 2. **🧠 Smart Router → Analysis**
    - Request Complexity, Speed Requirements, Provider Health
 3. **🤖 Provider Selection**
-   - Groq (Speed), Gemini (Quality), Ollama (Privacy), HuggingFace (Free)
+   - Gemini (Quality)
 4. **📊 Response Processing**
    - Analytics Logging, Cost Tracking, Performance Metrics
 5. **✅ Return to User**
