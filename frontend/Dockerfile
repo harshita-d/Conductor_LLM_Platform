@@ -13,9 +13,12 @@ RUN npm ci --no-audit --no-fund
 
 COPY frontend/ .
 ENV NODE_ENV=production
-# (optional) build-time var
-# ARG REACT_APP_API_BASE=""
-# ENV REACT_APP_API_BASE=${REACT_APP_API_BASE}
+
+# reduce memory & speed up build
+ENV NODE_OPTIONS=--max_old_space_size=1024
+ENV GENERATE_SOURCEMAP=false
+
+
 RUN npm run build
 
 # ===== Serve stage =====
