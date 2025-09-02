@@ -1,0 +1,25 @@
+# Conductor_LLM_Platform/docker-compose.yml
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      # If your React build needs build-time envs:
+      # args:
+      #   REACT_APP_API_BASE: "/api"
+    image: conductor-frontend:latest
+    ports:
+      - "80:80"                    # public entrypoint
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: conductor-backend:latest
+    # Do NOT publish backend port; keep it internal-only
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  
