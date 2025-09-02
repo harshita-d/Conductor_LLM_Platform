@@ -1,39 +1,49 @@
-// ChatScreen.js
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./ChatScreen.css";
+import Markdown from "markdown-to-jsx";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000";
 
 const ChatScreen = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const apiKey = state?.apiKey || "";
+
+  // read the values actually passed from HealthStatus
+  const provider = state?.provider ?? "auto";
+  const apiKeys = state?.apiKeys ?? []; // [{name, api_key}, ...]
+
+  // (optional) extract gemini key if you want a quick default
+  const geminiKey = useMemo(
+    () => apiKeys.find((k) => k.name === "gemini")?.api_key || "",
+    [apiKeys]
+  );
 
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([]); // [{role:"user"|"assistant", content:string}]
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [maxTokens, setMaxTokens] = useState(100);
   const [temperature, setTemperature] = useState(0.8);
 
-  const [status, setStatus] = useState(null); // server status payload
+  const [status, setStatus] = useState(null);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  const providerHealthy = useMemo(
-    () => Boolean(status?.providers?.[0]?.healthy),
-    [status]
-  );
-
-  // Redirect back if no API key present
+  // if user opened /chat directly, bounce back
   useEffect(() => {
-    if (!apiKey) navigate("/");
-  }, [apiKey, navigate]);
+    if (!state || !apiKeys.length) navigate("/", { replace: true });
+  }, [state, apiKeys.length, navigate]);
 
-  // Fetch provider/system status on mount
+  // fetch status once
   useEffect(() => {
     let active = true;
     (async () => {
@@ -41,7 +51,7 @@ const ChatScreen = () => {
         const res = await axios.get(`${API_BASE}/status`);
         if (active) setStatus(res.data);
       } catch {
-        // Keep quiet; UI handles lack of status gracefully
+        /* silent; UI tolerates missing status */
       }
     })();
     return () => {
@@ -49,7 +59,15 @@ const ChatScreen = () => {
     };
   }, []);
 
-  // Always scroll to last message
+  // compute provider health from status
+  const providerHealthy = useMemo(() => {
+    const list = status?.providers || [];
+    if (!list.length) return true; // don’t block UX if status missing
+    if (provider === "auto") return list.some((p) => p.healthy);
+    const match = list.find((p) => p.name === provider);
+    return match ? !!match.healthy : false;
+  }, [status, provider]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
@@ -66,12 +84,13 @@ const ChatScreen = () => {
     setLoading(true);
 
     try {
+      // use the apiKeys & chosen provider passed from HealthStatus
       const res = await axios.post(`${API_BASE}/chat`, {
-        api_keys: [{ name: "gemini", api_key: apiKey }],
+        api_keys: apiKeys, // <—
         max_tokens: Number(maxTokens),
         temperature: Number(temperature),
-        message: history, // full history per your backend contract
-        provider: "auto",
+        message: history,
+        provider, // <—
       });
 
       const reply = res.data?.response || "No response";
@@ -82,19 +101,16 @@ const ChatScreen = () => {
         err?.message ||
         "Failed to get response.";
       setError(detail);
-      // Echo error as assistant bubble for visibility
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: `Error: ${detail}` },
       ]);
     } finally {
       setLoading(false);
-      // refocus input for fast follow-ups
       inputRef.current?.focus();
     }
-  }, [apiKey, input, loading, maxTokens, messages, temperature]);
+  }, [apiKeys, provider, input, loading, maxTokens, messages, temperature]);
 
-  // Enter to send, Shift+Enter for newline
   const onKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -110,16 +126,10 @@ const ChatScreen = () => {
 
   return (
     <div className="chat-container">
-      {/* Header */}
       <header className="chat-header">
         <div className="chat-title">
-          <h2>Gemini Chat</h2>
-          <span
-            className={`health-dot ${
-              providerHealthy ? "ok" : "bad"
-            }`}
-            title={providerHealthy ? "Healthy" : "Unhealthy"}
-          />
+          <h2>Chat • {provider.toUpperCase()}</h2>
+          <span className={`health-dot ${providerHealthy ? "ok" : "bad"}`} />
         </div>
         <div className="header-actions">
           <button className="ghost-btn" onClick={() => navigate("/")}>
@@ -131,7 +141,6 @@ const ChatScreen = () => {
         </div>
       </header>
 
-      {/* Status strip (optional, collapsible look) */}
       <section className="status-card">
         <div className="status-row">
           <div>
@@ -151,7 +160,6 @@ const ChatScreen = () => {
         </div>
       </section>
 
-      {/* Controls */}
       <section className="controls">
         <div className="control">
           <label htmlFor="tokens">Max tokens</label>
@@ -173,31 +181,28 @@ const ChatScreen = () => {
             min={0}
             max={1}
             value={temperature}
-            onChange={(e) =>
-              setTemperature(parseFloat(e.target.value || "0"))
-            }
+            onChange={(e) => setTemperature(parseFloat(e.target.value || "0"))}
             className="input-field"
           />
         </div>
       </section>
 
-      {/* Chat transcript */}
       <main className="chat-box">
         {messages.length === 0 && (
           <div className="empty-hint">
             Start a conversation… (Enter to send, Shift+Enter for newline)
           </div>
         )}
-
         {messages.map((m, i) => (
           <div
             key={`${m.role}-${i}`}
-            className={`chat-bubble ${m.role === "user" ? "user" : "assistant"}`}
+            className={`chat-bubble ${
+              m.role === "user" ? "user" : "assistant"
+            }`}
           >
-            {m.content}
+            <Markdown>{m.content}</Markdown>
           </div>
         ))}
-
         {loading && (
           <div className="chat-bubble assistant">
             <span className="typing">
@@ -210,12 +215,13 @@ const ChatScreen = () => {
         <div ref={chatEndRef} />
       </main>
 
-      {/* Composer */}
       <footer className="chat-input">
         <textarea
           ref={inputRef}
           className="input-field textarea"
-          placeholder="Ask something…"
+          placeholder={`Ask something… ${
+            geminiKey ? "" : "(keys passed via state)"
+          }`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}

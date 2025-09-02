@@ -16,6 +16,8 @@ from .models import (
     SystemStatus,
     ErrorResponse,
     HealthRequest,
+    ProviderList,
+    ProviderInfo
 )
 import os
 from fastapi.exceptions import RequestValidationError
@@ -200,6 +202,13 @@ async def system_status():
         total_requests=total_requests,
         uptime=uptime,
     )
+
+@app.get("/list", response_model=ProviderList,tags=["list"])
+async def list_all_providers():
+    """List all avaialble providers"""
+    provider_items=[ProviderInfo(name=provider.value) for provider in Provider]
+    return ProviderList(providers=provider_items)
+
 
 
 @app.exception_handler(HTTPException)

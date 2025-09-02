@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
+import shortuuid
 
 
 class MessageRole(str, Enum):
@@ -18,6 +19,20 @@ class Provider(str, Enum):
     AUTO = "auto"
     GEMINI = "gemini"
 
+def generate_id() -> str:
+    return "PRO" + shortuuid.ShortUUID().random(length=6)
+
+
+class ProviderInfo(BaseModel):
+    """List all avavailble providers"""
+
+    id: str = Field(default_factory=generate_id, description="Unique provider ID")
+    name: str = Field(..., example="gemini")
+
+
+class ProviderList(BaseModel):
+    providers: List[ProviderInfo]
+
 
 class ChatMessage(BaseModel):
     """Individual message in a chat conversation"""
@@ -29,6 +44,7 @@ class ChatMessage(BaseModel):
         json_schema_extra = {
             "example": {"role": "user", "content": "Hello, how are you?"}
         }
+
 
 class APIKeyRequestProvider(BaseModel):
     name: str = Field(..., example="gemini")
@@ -53,11 +69,13 @@ class ChatRequest(BaseModel):
         description="Controls randomness: 0 = deterministic, 2 = very random",
     )
     max_tokens: int = Field(
-        default=1000, ge=1, le=4000, description="Maximum number of tokens to generate"
+        default=100, ge=1, le=4000, description="Maximum number of tokens to generate"
     )
     api_keys: List[APIKeyRequestProvider] = Field(
-        default_factory=list, description="Map of provider_name -> API key for AUTO mode"
+        default_factory=list,
+        description="Map of provider_name -> API key for AUTO mode",
     )
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -65,9 +83,9 @@ class ChatRequest(BaseModel):
                 "message": [{"role": "user", "content": "Write a short poem about AI"}],
                 "temperature": 0.7,
                 "max_tokens": 1000,
-                  "api_keys": [
-                    { "name": "gemini", "api_key": "GEMINI_API_KEY_123" },
-                ]
+                "api_keys": [
+                    {"name": "gemini", "api_key": "GEMINI_API_KEY_123"},
+                ],
             }
         }
 
@@ -137,9 +155,12 @@ class SystemStatus(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model"""
+
     error: int = Field(..., description="Error type")
     detail: str = Field(..., description="Detailed error message")
-    provider: Optional[str] = Field(default=None, description="Provider that caused the error")
+    provider: Optional[str] = Field(
+        default=None, description="Provider that caused the error"
+    )
     # timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Error timestamp")
 
     class Config:
@@ -148,6 +169,5 @@ class ErrorResponse(BaseModel):
                 "error": 400,
                 "detail": "The request format is invalid",
                 "provider": None,
-                
             }
         }
